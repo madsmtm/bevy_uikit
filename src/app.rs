@@ -286,7 +286,9 @@ define_class!(
             options: &UISceneConnectionOptions,
         ) -> Retained<UISceneConfiguration> {
             trace!(
-                ?connecting_scene_session,
+                scene = ?unsafe { connecting_scene_session.persistentIdentifier() },
+                user_info = ?unsafe { connecting_scene_session.userInfo() },
+                configuration = ?unsafe { connecting_scene_session.configuration() },
                 ?options,
                 "application:configurationForConnectingSceneSession:options:"
             );

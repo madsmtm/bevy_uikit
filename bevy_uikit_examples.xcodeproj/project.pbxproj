@@ -12,6 +12,7 @@
 		EC0A51442D5A362400AAB73C /* build-in-xcode.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-in-xcode.sh"; sourceTree = "<group>"; };
 		EC0A51452D5A36D000AAB73C /* Cargo.lock */ = {isa = PBXFileReference; lastKnownFileType = text; path = Cargo.lock; sourceTree = "<group>"; };
 		EC326D3B2D5A4187001E871E /* bevy-uikit-examples-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "bevy-uikit-examples-Info.plist"; sourceTree = "<group>"; };
+		EC326D452D5A5015001E871E /* bevy_uikit_examples.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = bevy_uikit_examples.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -37,6 +38,7 @@
 			isa = PBXGroup;
 			children = (
 				EC326D3B2D5A4187001E871E /* bevy-uikit-examples-Info.plist */,
+				EC326D452D5A5015001E871E /* bevy_uikit_examples.entitlements */,
 				EC0A51442D5A362400AAB73C /* build-in-xcode.sh */,
 				EC0A51422D5A35EF00AAB73C /* .cargo */,
 				EC0A51342D5A2D5E00AAB73C /* src */,
@@ -200,6 +202,7 @@
 		EC0A510D2D5A2CD800AAB73C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = bevy_uikit_examples.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = 9K7QZYTTLY;
@@ -214,6 +217,9 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.bevy-uikit-examples";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -221,6 +227,7 @@
 		EC0A510E2D5A2CD800AAB73C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = bevy_uikit_examples.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = 9K7QZYTTLY;
@@ -235,6 +242,9 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.bevy-uikit-examples";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

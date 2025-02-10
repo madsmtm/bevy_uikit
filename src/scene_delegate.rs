@@ -52,7 +52,8 @@ define_class!(
         ) {
             trace!(
                 scene = ?unsafe { scene.session().persistentIdentifier() },
-                ?session,
+                user_info = ?unsafe { session.userInfo() },
+                configuration = ?unsafe { session.configuration() },
                 ?connection_options,
                 "scene:willConnectToSession:options:"
             );
@@ -102,7 +103,7 @@ define_class!(
                                 setup_window(Some(scene), entity, window, self.mtm());
                             (entity, uikit_window)
                         } else {
-                            trace!("creating user-requested window");
+                            trace!("creating system-requested window");
                             // Otherwise, assume that this is a user-launched window.
                             let entity = world.spawn(Window::default());
                             let window = entity.get::<Window>().unwrap();

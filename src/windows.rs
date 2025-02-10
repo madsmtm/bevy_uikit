@@ -200,6 +200,11 @@ fn update_window(
     window: &UIWindow,
     scene: Option<&UIWindowScene>,
 ) {
+    // Avoid infinity, which NSLayoutConstraint doesn't like.
+    fn avoid_inf(num: f32) -> CGFloat {
+        num.min(f32::MAX) as CGFloat
+    }
+
     unsafe {
         if let Some(scene) = scene {
             let title = NSString::from_str(&title);
@@ -210,8 +215,8 @@ fn update_window(
 
             if let Some(size_restrictions) = scene.sizeRestrictions() {
                 let min = CGSize {
-                    width: resize_constraints.min_width as CGFloat,
-                    height: resize_constraints.min_height as CGFloat,
+                    width: avoid_inf(resize_constraints.min_width),
+                    height: avoid_inf(resize_constraints.min_height),
                 };
                 if min != size_restrictions.minimumSize() {
                     trace!(?min, "setting UIWindowScene.sizeRestrictions.minimumSize");
@@ -219,8 +224,8 @@ fn update_window(
                 }
 
                 let max = CGSize {
-                    width: resize_constraints.max_width as CGFloat,
-                    height: resize_constraints.max_height as CGFloat,
+                    width: avoid_inf(resize_constraints.max_width),
+                    height: avoid_inf(resize_constraints.max_height),
                 };
                 if max != size_restrictions.maximumSize() {
                     trace!(?max, "setting UIWindowScene.sizeRestrictions.maximumSize");
