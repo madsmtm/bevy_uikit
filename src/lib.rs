@@ -11,12 +11,14 @@ use crate::app::ApplicationDelegate;
 pub use crate::app::{disallow_app_exit, uikit_runner};
 use crate::scene_delegate::SceneDelegate;
 pub use crate::settings::UIKitSettings;
+use crate::view::{View, ViewController};
 use crate::windows::BevyWindow;
 pub use windows::{changed_windows, create_windows, despawn_windows, UIKitWindow, UIKitWindows};
 
 mod app;
 mod scene_delegate;
 mod settings;
+mod view;
 mod windows;
 
 // Used to pass the newly created window entity ID to `scene:willConnectToSession:options:`.
@@ -42,6 +44,8 @@ impl Plugin for UIKitPlugin {
         // Initialize classes with Objective-C runtime.
         let _ = ApplicationDelegate::class();
         let _ = BevyWindow::class();
+        let _ = ViewController::class();
+        let _ = View::class();
         if !cfg!(feature = "no-scene") && available!(ios = 13.0, tvos = 13.0, visionos = 1.0, ..) {
             let _ = SceneDelegate::class();
         }

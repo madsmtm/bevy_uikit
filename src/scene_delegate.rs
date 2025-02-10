@@ -161,9 +161,6 @@ define_class!(
             if let Some(window) = self.ivars().entity.get() {
                 app.world_mut().send_window_event(WindowActivate { window });
             }
-            if let Some(uiwindow) = self.window() {
-                uiwindow.makeKeyAndVisible();
-            }
             app.update();
         }
 
