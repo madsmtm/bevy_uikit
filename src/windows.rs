@@ -87,9 +87,15 @@ pub(crate) fn setup_window(
 /// Request new windows to be created for each entity with a newly-added [`Window`] component.
 pub fn create_windows(
     mut created_windows: Query<Entity, (Added<Window>, Without<PrimaryWindow>)>,
+    uikit_windows: NonSend<UIKitWindows>,
     mtm: NonSend<MainThread>,
 ) {
     for entity in &mut created_windows {
+        if uikit_windows.is_initialized(entity) {
+            // Don't request creation on user-created windows.
+            continue;
+        };
+
         // Check for window scene support.
         if available!(ios = 13.0, tvos = 13.0, visionos = 1.0, ..) {
             trace!("requesting window creation");
