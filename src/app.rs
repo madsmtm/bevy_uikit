@@ -139,6 +139,7 @@ pub(crate) fn send_event(mtm: MainThreadMarker, event: impl Event) {
         app.world_mut().send_event(event);
         app.update();
     } else {
+        trace!("re-entrant access of App, scheduling event for later");
         queue_closure(mtm, move || {
             let mut app = access_app(mtm);
             app.world_mut().send_event(event);
@@ -156,6 +157,7 @@ pub(crate) fn send_window_event(
         app.world_mut().send_window_event(event);
         app.update();
     } else {
+        trace!("re-entrant access of App, scheduling event for later");
         queue_closure(mtm, move || {
             let mut app = access_app(mtm);
             app.world_mut().send_window_event(event);

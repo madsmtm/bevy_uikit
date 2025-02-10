@@ -161,6 +161,9 @@ define_class!(
             if let Some(window) = self.ivars().entity.get() {
                 app.world_mut().send_window_event(WindowActivate { window });
             }
+            if let Some(uiwindow) = self.window() {
+                uiwindow.makeKeyAndVisible();
+            }
             app.update();
         }
 
@@ -214,10 +217,8 @@ define_class!(
 
     unsafe impl UIWindowSceneDelegate for SceneDelegate {
         #[unsafe(method_id(window))]
-        fn window(&self) -> Option<Retained<UIWindow>> {
-            let window = self.ivars().window.take();
-            self.ivars().window.set(window.clone());
-            window
+        fn __window(&self) -> Option<Retained<UIWindow>> {
+            self.window()
         }
 
         #[unsafe(method(setWindow:))]
@@ -244,3 +245,11 @@ define_class!(
         }
     }
 );
+
+impl SceneDelegate {
+    fn window(&self) -> Option<Retained<UIWindow>> {
+        let window = self.ivars().window.take();
+        self.ivars().window.set(window.clone());
+        window
+    }
+}
