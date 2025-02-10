@@ -180,15 +180,19 @@ define_class!(
         #[unsafe(method(windowScene:didUpdateCoordinateSpace:interfaceOrientation:traitCollection:))]
         fn windowScene_didUpdateCoordinateSpace_interfaceOrientation_traitCollection(
             &self,
-            scene: &UIWindowScene,
+            _scene: &UIWindowScene,
             _previous_coordinate_space: &ProtocolObject<dyn UICoordinateSpace>,
             _previous_interface_orientation: UIInterfaceOrientation,
             _previous_trait_collection: &UITraitCollection,
         ) {
-            trace!(
-                scene = ?unsafe { scene.session().persistentIdentifier() },
-                "windowScene:didUpdateCoordinateSpace:interfaceOrientation:traitCollection:",
-            );
+            // Happens quite often apparently?
+            // trace!(
+            //     scene = ?unsafe { _scene.session().persistentIdentifier() },
+            //     ?_previous_coordinate_space,
+            //     ?_previous_interface_orientation,
+            //     ?_previous_trait_collection,
+            //     "windowScene:didUpdateCoordinateSpace:interfaceOrientation:traitCollection:",
+            // );
         }
     }
 );
