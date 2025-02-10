@@ -11,6 +11,16 @@ We alreay have one UI backend in Bevy, namely [`bevy_winit`](https://docs.rs/bev
 Put simply, the Winit iOS/UIKit backend (which I maintain :roll_eyes:) is quite terrible. So I created this to experiment with what's actually necessary to take game development to the next level on iOS (and visionOS).
 
 
+## Development
+
+Checkout https://github.com/madsmtm/bevy/tree/uikit in a folder relative to this project (or comment out the `[patch."https://github.com/madsmtm/bevy"]` in `.cargo/config.toml`).
+
+Run the examples on Mac Catalyst with:
+```
+cargo bundle --target=aarch64-apple-ios-macabi --example simple && ./target/aarch64-apple-ios-macabi/debug/examples/bundle/ios/bevy_uikit.app/simple
+```
+
+
 ## Notes
 
 This intends to:
