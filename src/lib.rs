@@ -23,16 +23,21 @@ pub(crate) const USER_INFO_WINDOW_ENTITY_ID: &str = "BevyWindowEntityId";
 #[derive(Default)]
 pub struct UIKitPlugin;
 
+/// A marker used to statically know that a system runs on the main thread.
+#[derive(Debug)]
+pub struct MainThread(MainThreadMarker);
+
 impl Plugin for UIKitPlugin {
     fn name(&self) -> &str {
         "bevy_uikit::UIKitPlugin"
     }
 
     fn build(&self, app: &mut App) {
-        let _mtm = MainThreadMarker::new()
+        let mtm = MainThreadMarker::new()
             .expect("must build the App on the main thread when using UIKit");
 
         app.init_non_send_resource::<UIKitWindows>()
+            .insert_non_send_resource(MainThread(mtm))
             .init_resource::<UIKitSettings>()
             .set_runner(uikit_runner)
             .add_systems(Last, disallow_app_exit)

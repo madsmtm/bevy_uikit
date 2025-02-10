@@ -33,7 +33,7 @@ define_class!(
     impl SceneDelegate {
         #[unsafe(method_id(init))]
         fn init(this: Allocated<Self>) -> Retained<Self> {
-            tracing::info!("init scene");
+            tracing::trace!("init scene");
             let this = this.set_ivars(Ivars {
                 window: Cell::new(None),
             });
@@ -78,6 +78,7 @@ define_class!(
             };
 
             let (entity, uikit_window) = if let Some(entity) = entity {
+                trace!("creating requested window");
                 let window = world
                     .get::<Window>(entity)
                     .expect("failed fetching Window component on newly created window");
@@ -95,12 +96,14 @@ define_class!(
                         // If we have a primary window, check if we have already initialized it.
                         let uikit_windows = world.non_send_resource_mut::<UIKitWindows>();
                         if !uikit_windows.is_initialized(entity) {
+                            trace!("initializing primary window");
                             // If we have not, assume this is the initial launch, and configure the entity.
                             let window = world.get::<Window>(entity).unwrap();
                             let uikit_window =
                                 setup_window(Some(scene), entity, window, self.mtm());
                             (entity, uikit_window)
                         } else {
+                            trace!("creating user-requested window");
                             // Otherwise, assume that this is a user-launched window.
                             let entity = world.spawn(Window::default());
                             let window = entity.get::<Window>().unwrap();
@@ -110,6 +113,7 @@ define_class!(
                         }
                     }
                     Err(QuerySingleError::NoEntities(_)) => {
+                        trace!("creating primary window");
                         // If there was no primary window, let's create it ourselves.
                         let entity = world.spawn((Window::default(), PrimaryWindow));
                         let window = entity.get::<Window>().unwrap();

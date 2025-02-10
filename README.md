@@ -81,6 +81,7 @@ Unknowns:
   - Similarly, we _can_ control the destruction of the window/scene in multi-scene environments, but not in single-scene apps.
   - Maybe store all windows as a resource, and give read-only access somehow?
 - Accessibility. `accesskit_winit` doesn't support iOS either.
+- Use `MTKView`?
 
 How do we actually handle the different kinds of windows?
 - UIKit wants you to declare them at a high level in `UISceneConfigurations` `Info.plist`.

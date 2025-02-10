@@ -5,13 +5,12 @@ use bevy_ecs::prelude::EventReader;
 use bevy_ecs::{
     entity::{hash_map::EntityHashMap, Entity},
     event::EventWriter,
-    prelude::Changed,
-    query::Added,
+    query::{Added, Changed, Without},
     removal_detection::RemovedComponents,
     system::{NonSend, NonSendMut, Query},
 };
 use bevy_input::keyboard::KeyboardFocusLost;
-use bevy_window::{Window, WindowFocused, WindowTheme};
+use bevy_window::{PrimaryWindow, Window, WindowFocused, WindowTheme};
 use block2::RcBlock;
 use objc2::{available, rc::Retained, MainThreadMarker, MainThreadOnly};
 use objc2::{AllocAnyThread, Message};
@@ -23,7 +22,7 @@ use objc2_ui_kit::{
 };
 use tracing::{error, trace, warn};
 
-use crate::{USER_INFO_WINDOW_ENTITY_ID, WINDOW_ACTIVITY_TYPE};
+use crate::{MainThread, USER_INFO_WINDOW_ENTITY_ID, WINDOW_ACTIVITY_TYPE};
 
 /// The state specific to UIKit for each window.
 #[derive(Debug)]
@@ -87,14 +86,15 @@ pub(crate) fn setup_window(
 
 /// Request new windows to be created for each entity with a newly-added [`Window`] component.
 pub fn create_windows(
-    mut created_windows: Query<Entity, Added<Window>>,
-    mtm: NonSend<MainThreadMarker>,
+    mut created_windows: Query<Entity, (Added<Window>, Without<PrimaryWindow>)>,
+    mtm: NonSend<MainThread>,
 ) {
     for entity in &mut created_windows {
         // Check for window scene support.
         if available!(ios = 13.0, tvos = 13.0, visionos = 1.0, ..) {
-            let application = UIApplication::sharedApplication(*mtm);
-            let options = unsafe { UISceneActivationRequestOptions::new(*mtm) };
+            trace!("requesting window creation");
+            let application = UIApplication::sharedApplication(mtm.0);
+            let options = unsafe { UISceneActivationRequestOptions::new(mtm.0) };
             let user_activity = unsafe {
                 NSUserActivity::initWithActivityType(
                     NSUserActivity::alloc(),
@@ -127,36 +127,17 @@ pub fn create_windows(
     }
 }
 
-/// Check whether keyboard focus was lost. This is different from window
-/// focus in that swapping between Bevy windows keeps window focus.
-pub(crate) fn check_keyboard_focus_lost(
-    mut focus_events: EventReader<WindowFocused>,
-    mut keyboard_focus: EventWriter<KeyboardFocusLost>,
-) {
-    let mut focus_lost = false;
-    let mut focus_gained = false;
-    for e in focus_events.read() {
-        if e.focused {
-            focus_gained = true;
-        } else {
-            focus_lost = true;
-        }
-    }
-    if focus_lost & !focus_gained {
-        keyboard_focus.send(KeyboardFocusLost);
-    }
-}
-
 /// Propagate changes by the user in [`Window`] entities to UIKit.
 pub fn changed_windows(
     changed_windows: Query<(Entity, &Window), Changed<Window>>,
     uikit_windows: NonSend<UIKitWindows>,
 ) {
     for (entity, window) in &changed_windows {
+        trace!(?entity, "detected changes to Window");
         let Some(uikit_window) = uikit_windows.get(entity) else {
             // Not (yet) registered with UIKit, should be when the scene connects.
             // TODO: Make this state impossible?
-            warn!("changed `Window` while not connected");
+            warn!("changed `Window` before it had a chance to be constructed");
             continue;
         };
 
@@ -309,10 +290,11 @@ pub fn despawn_windows(
     mut uikit_windows: NonSendMut<UIKitWindows>,
 ) {
     for entity in removed_windows.read() {
+        trace!(?entity, "detected removed Window");
         // Remove from our state.
         let Some(uikit_window) = uikit_windows.entity_to_uikit.remove(&entity) else {
             // TODO: Make this state impossible?
-            warn!("removed `Window` before connected");
+            warn!("removed `Window` before it had a chance to be constructed");
             continue;
         };
 

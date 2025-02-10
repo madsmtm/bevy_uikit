@@ -188,11 +188,13 @@ define_class!(
                     .get_single(&world);
                 let (entity, uikit_window) = match query {
                     Ok((entity, window)) => {
+                        trace!("initializing primary window");
                         // If the user provided a primary window, initialize that.
                         let uikit_window = setup_window(scene, entity, window, self.mtm());
                         (entity, uikit_window)
                     }
                     Err(QuerySingleError::NoEntities(_)) => {
+                        trace!("creating primary window");
                         // If there was no primary window, let's create it ourselves.
                         let entity = world.spawn((Window::default(), PrimaryWindow));
                         let window = entity.get::<Window>().unwrap();
@@ -322,7 +324,6 @@ define_class!(
 
         #[unsafe(method_id(window))]
         fn window(&self) -> Option<Retained<UIWindow>> {
-            warn!("setting a story board is not supported in Bevy, remove `UIMainStoryboardFile` key from `Info.plist`");
             None
         }
 

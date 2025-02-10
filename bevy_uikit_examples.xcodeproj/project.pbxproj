@@ -1,0 +1,261 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXFileReference section */
+		EC0A50F12D5A2CD600AAB73C /* bevy_uikit_examples.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bevy_uikit_examples.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EC0A512D2D5A2D5E00AAB73C /* Cargo.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = Cargo.toml; sourceTree = "<group>"; };
+		EC0A51442D5A362400AAB73C /* build-in-xcode.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-in-xcode.sh"; sourceTree = "<group>"; };
+		EC0A51452D5A36D000AAB73C /* Cargo.lock */ = {isa = PBXFileReference; lastKnownFileType = text; path = Cargo.lock; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		EC0A51342D5A2D5E00AAB73C /* src */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = src;
+			sourceTree = "<group>";
+		};
+		EC0A51422D5A35EF00AAB73C /* .cargo */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = .cargo;
+			sourceTree = "<group>";
+		};
+		EC0A51482D5A36F700AAB73C /* examples */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = examples;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXGroup section */
+		EC0A50E82D5A2CD600AAB73C = {
+			isa = PBXGroup;
+			children = (
+				EC0A51442D5A362400AAB73C /* build-in-xcode.sh */,
+				EC0A51422D5A35EF00AAB73C /* .cargo */,
+				EC0A51342D5A2D5E00AAB73C /* src */,
+				EC0A51482D5A36F700AAB73C /* examples */,
+				EC0A512D2D5A2D5E00AAB73C /* Cargo.toml */,
+				EC0A51452D5A36D000AAB73C /* Cargo.lock */,
+				EC0A50F22D5A2CD600AAB73C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		EC0A50F22D5A2CD600AAB73C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				EC0A50F12D5A2CD600AAB73C /* bevy_uikit_examples.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		EC0A50F02D5A2CD600AAB73C /* bevy_uikit_examples */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EC0A510C2D5A2CD800AAB73C /* Build configuration list for PBXNativeTarget "bevy_uikit_examples" */;
+			buildPhases = (
+				EC0A51402D5A356B00AAB73C /* ShellScript */,
+				EC0A513F2D5A352F00AAB73C /* ShellScript */,
+				EC0A50EF2D5A2CD600AAB73C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = bevy_uikit_examples;
+			packageProductDependencies = (
+			);
+			productName = bevy_uikit_examples;
+			productReference = EC0A50F12D5A2CD600AAB73C /* bevy_uikit_examples.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		EC0A50E92D5A2CD600AAB73C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					EC0A50F02D5A2CD600AAB73C = {
+						CreatedOnToolsVersion = 16.2;
+					};
+				};
+			};
+			buildConfigurationList = EC0A50EC2D5A2CD600AAB73C /* Build configuration list for PBXProject "bevy_uikit_examples" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = EC0A50E82D5A2CD600AAB73C;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = EC0A50F22D5A2CD600AAB73C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EC0A50F02D5A2CD600AAB73C /* bevy_uikit_examples */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		EC0A50EF2D5A2CD600AAB73C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		EC0A513F2D5A352F00AAB73C /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(OBJECT_FILE_DIR)/$(EXAMPLE_NAME)",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp $OBJECT_FILE_DIR/$EXAMPLE_NAME $TARGET_BUILD_DIR/$EXECUTABLE_PATH\n";
+		};
+		EC0A51402D5A356B00AAB73C /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			dependencyFile = "$(DERIVED_FILE_DIR)/$(ARCHS)-$(EXAMPLE_NAME).d";
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Cargo.toml",
+				"$(SRCROOT)/.cargo/config.toml",
+				"$(SRCROOT)/build-in-xcode.sh",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(OBJECT_FILE_DIR)/$(EXAMPLE_NAME)",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "./build-in-xcode.sh\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		EC0A510A2D5A2CD800AAB73C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		EC0A510B2D5A2CD800AAB73C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		EC0A510D2D5A2CD800AAB73C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 0;
+				DEVELOPMENT_TEAM = 9K7QZYTTLY;
+				EXAMPLE_NAME = simple;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = metal;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.bevy-uikit-examples";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		EC0A510E2D5A2CD800AAB73C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 0;
+				DEVELOPMENT_TEAM = 9K7QZYTTLY;
+				EXAMPLE_NAME = simple;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = metal;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.bevy-uikit-examples";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		EC0A50EC2D5A2CD600AAB73C /* Build configuration list for PBXProject "bevy_uikit_examples" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EC0A510A2D5A2CD800AAB73C /* Debug */,
+				EC0A510B2D5A2CD800AAB73C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EC0A510C2D5A2CD800AAB73C /* Build configuration list for PBXNativeTarget "bevy_uikit_examples" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EC0A510D2D5A2CD800AAB73C /* Debug */,
+				EC0A510E2D5A2CD800AAB73C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = EC0A50E92D5A2CD600AAB73C /* Project object */;
+}
