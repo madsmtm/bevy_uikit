@@ -1,2 +1,7 @@
 [build]
 target = ["aarch64-apple-ios-macabi"]
+
+[env]
+# Same as `rustc --target=aarch64-apple-ios-macabi --print deployment-target`.
+# Should be redundant after https://github.com/rust-lang/rust/issues/136113.
+IPHONEOS_DEPLOYMENT_TARGET = "13.1"

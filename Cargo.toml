@@ -8,30 +8,25 @@ keywords = ["bevy", "uikit", "ios", "gui"]
 authors = ["Mads Marquart <mads@marquart.dk>"]
 edition = "2021"
 rust-version = "1.83"
+exclude = [".github/", "assets"]
 
-exclude = [".github/"]
+[features]
+# Do not use scenes. Useful for testing `UIApplicationDelegate`
+# support even on newer devices that prefers scenes.
+no-scene = []
 
 [dependencies]
 # bevy
-bevy_a11y = "0.15"
-bevy_app = "0.15"
-bevy_derive = "0.15"
-bevy_ecs = "0.15"
-bevy_input = "0.15"
-# bevy_input_focus = "0.15"
-bevy_log = "0.15"
-bevy_math = "0.15"
-bevy_reflect = "0.15"
-bevy_window = "0.15"
-bevy_utils = "0.15"
-bevy_tasks = "0.15"
-# bevy_platform_support = { version = "0.15", default-features = false, features = [
-#     "std",
-# ] }
-
-# bevy optional
-bevy_asset = { version = "0.15", optional = true }
-bevy_image = { version = "0.15", optional = true }
+bevy_a11y = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
+bevy_app = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
+bevy_derive = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
+bevy_ecs = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
+bevy_input = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
+bevy_log = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
+bevy_math = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
+bevy_reflect = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
+bevy_window = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }  # Different paradigm, will need changes to really make sense
+bevy_tasks = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
 
 # Apple-specific
 dispatch2 = "0.2"
@@ -42,6 +37,7 @@ objc2-core-graphics = "0.3"
 objc2-metal = "0.3"
 objc2-foundation = "0.3"
 objc2-ui-kit = "0.3"
+libc = "0.2"
 
 # other
 approx = { version = "0.5", default-features = false }
@@ -49,6 +45,5 @@ cfg-if = "1.0"
 raw-window-handle = "0.6"
 serde = { version = "1.0", features = ["derive"], optional = true }
 bytemuck = { version = "1.5", optional = true }
-wgpu-types = { version = "23", optional = true }
 accesskit = "0.17"
 tracing = { version = "0.1", default-features = false, features = ["std"] }
