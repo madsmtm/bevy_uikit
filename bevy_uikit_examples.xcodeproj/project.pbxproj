@@ -11,6 +11,7 @@
 		EC0A512D2D5A2D5E00AAB73C /* Cargo.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = Cargo.toml; sourceTree = "<group>"; };
 		EC0A51442D5A362400AAB73C /* build-in-xcode.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-in-xcode.sh"; sourceTree = "<group>"; };
 		EC0A51452D5A36D000AAB73C /* Cargo.lock */ = {isa = PBXFileReference; lastKnownFileType = text; path = Cargo.lock; sourceTree = "<group>"; };
+		EC326D3B2D5A4187001E871E /* bevy-uikit-examples-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "bevy-uikit-examples-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -35,6 +36,7 @@
 		EC0A50E82D5A2CD600AAB73C = {
 			isa = PBXGroup;
 			children = (
+				EC326D3B2D5A4187001E871E /* bevy-uikit-examples-Info.plist */,
 				EC0A51442D5A362400AAB73C /* build-in-xcode.sh */,
 				EC0A51422D5A35EF00AAB73C /* .cargo */,
 				EC0A51342D5A2D5E00AAB73C /* src */,
@@ -202,6 +204,7 @@
 				DEVELOPMENT_TEAM = 9K7QZYTTLY;
 				EXAMPLE_NAME = simple;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "bevy-uikit-examples-Info.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIRequiredDeviceCapabilities = metal;
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
@@ -222,6 +225,7 @@
 				DEVELOPMENT_TEAM = 9K7QZYTTLY;
 				EXAMPLE_NAME = simple;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "bevy-uikit-examples-Info.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIRequiredDeviceCapabilities = metal;
 				INFOPLIST_KEY_UIStatusBarHidden = YES;

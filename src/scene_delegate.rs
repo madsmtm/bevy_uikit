@@ -33,7 +33,6 @@ define_class!(
     impl SceneDelegate {
         #[unsafe(method_id(init))]
         fn init(this: Allocated<Self>) -> Retained<Self> {
-            tracing::trace!("init scene");
             let this = this.set_ivars(Ivars {
                 window: Cell::new(None),
             });
@@ -52,7 +51,7 @@ define_class!(
             connection_options: &UISceneConnectionOptions,
         ) {
             trace!(
-                ?scene,
+                scene = ?unsafe { scene.session().persistentIdentifier() },
                 ?session,
                 ?connection_options,
                 "scene:willConnectToSession:options:"
@@ -134,32 +133,32 @@ define_class!(
 
         #[unsafe(method(sceneWillEnterForeground:))]
         fn sceneWillEnterForeground(&self, scene: &UIScene) {
-            trace!(?scene, "sceneWillEnterForeground:");
+            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneWillEnterForeground:");
         }
 
         #[unsafe(method(sceneDidBecomeActive:))]
         fn sceneDidBecomeActive(&self, scene: &UIScene) {
-            trace!(?scene, "sceneDidBecomeActive:");
+            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidBecomeActive:");
         }
 
         #[unsafe(method(sceneWillResignActive:))]
         fn sceneWillResignActive(&self, scene: &UIScene) {
-            trace!(?scene, "sceneWillResignActive:");
+            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneWillResignActive:");
         }
 
         #[unsafe(method(sceneDidEnterBackground:))]
         fn sceneDidEnterBackground(&self, scene: &UIScene) {
-            trace!(?scene, "sceneDidEnterBackground:");
+            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidEnterBackground:");
         }
 
         #[unsafe(method(sceneDidDisconnect:))]
         fn sceneDidDisconnect(&self, scene: &UIScene) {
-            trace!(?scene, "sceneDidDisconnect:");
+            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidDisconnect:");
         }
 
         #[unsafe(method(scene:openURLContexts:))]
         fn scene_openURLContexts(&self, scene: &UIScene, url_contexts: &NSSet<UIOpenURLContext>) {
-            trace!(?scene, ?url_contexts, "scene:openURLContexts:");
+            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, ?url_contexts, "scene:openURLContexts:");
             // TODO: Handle URL opening
         }
     }
@@ -181,17 +180,14 @@ define_class!(
         #[unsafe(method(windowScene:didUpdateCoordinateSpace:interfaceOrientation:traitCollection:))]
         fn windowScene_didUpdateCoordinateSpace_interfaceOrientation_traitCollection(
             &self,
-            window_scene: &UIWindowScene,
-            previous_coordinate_space: &ProtocolObject<dyn UICoordinateSpace>,
-            previous_interface_orientation: UIInterfaceOrientation,
-            previous_trait_collection: &UITraitCollection,
+            scene: &UIWindowScene,
+            _previous_coordinate_space: &ProtocolObject<dyn UICoordinateSpace>,
+            _previous_interface_orientation: UIInterfaceOrientation,
+            _previous_trait_collection: &UITraitCollection,
         ) {
             trace!(
-                ?window_scene,
-                ?previous_coordinate_space,
-                ?previous_interface_orientation,
-                ?previous_trait_collection,
-                "windowScene:didUpdateCoordinateSpace:interfaceOrientation:traitCollection:"
+                scene = ?unsafe { scene.session().persistentIdentifier() },
+                "windowScene:didUpdateCoordinateSpace:interfaceOrientation:traitCollection:",
             );
         }
     }

@@ -18,7 +18,7 @@ use objc2_foundation::{
 use objc2_ui_kit::{
     UIApplication, UIApplicationDelegate, UIApplicationLaunchOptionsKey, UIApplicationMain,
     UIApplicationOpenURLOptionsKey, UISceneConfiguration, UISceneConnectionOptions, UISceneSession,
-    UIWindow, UIWindowScene,
+    UIWindow,
 };
 use tracing::{trace, warn};
 
@@ -303,7 +303,6 @@ define_class!(
                 )
             };
 
-            unsafe { config.setSceneClass(Some(UIWindowScene::class())) }; // Default
             unsafe { config.setDelegateClass(Some(SceneDelegate::class())) };
 
             config

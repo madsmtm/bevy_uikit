@@ -4,8 +4,10 @@
     html_favicon_url = "https://bevyengine.org/assets/icon.png"
 )]
 
+use app::ApplicationDelegate;
 use bevy_app::{App, Last, Plugin};
-use objc2::MainThreadMarker;
+use objc2::{available, ClassType, MainThreadMarker};
+use scene_delegate::SceneDelegate;
 
 pub use crate::app::{disallow_app_exit, uikit_runner};
 pub use crate::settings::UIKitSettings;
@@ -35,6 +37,12 @@ impl Plugin for UIKitPlugin {
     fn build(&self, app: &mut App) {
         let mtm = MainThreadMarker::new()
             .expect("must build the App on the main thread when using UIKit");
+
+        // Initialize classes with Objective-C runtime.
+        let _ = ApplicationDelegate::class();
+        if !cfg!(feature = "no-scene") && available!(ios = 13.0, tvos = 13.0, visionos = 1.0, ..) {
+            let _ = SceneDelegate::class();
+        }
 
         app.init_non_send_resource::<UIKitWindows>()
             .insert_non_send_resource(MainThread(mtm))
