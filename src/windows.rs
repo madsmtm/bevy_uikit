@@ -4,32 +4,47 @@ use std::ptr::NonNull;
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::{
     entity::{hash_map::EntityHashMap, Entity},
-    event::EventWriter,
+    event::Event,
     query::{Added, Changed, Without},
     removal_detection::RemovedComponents,
     system::{NonSend, NonSendMut, Query},
+    world::World,
 };
 use bevy_input::keyboard::KeyboardFocusLost;
-use bevy_window::{PrimaryWindow, Window, WindowFocused, WindowTheme};
+use bevy_window::{PrimaryWindow, Window, WindowEvent, WindowFocused, WindowTheme};
 use block2::RcBlock;
 use objc2::{available, rc::Retained, MainThreadMarker, MainThreadOnly};
-use objc2::{AllocAnyThread, Message};
+use objc2::{define_class, msg_send, AllocAnyThread, DefinedClass, Message};
 use objc2_core_foundation::{CGFloat, CGSize};
-use objc2_foundation::{ns_string, NSDictionary, NSError, NSNumber, NSString, NSUserActivity};
+use objc2_foundation::{
+    ns_string, NSDictionary, NSError, NSNumber, NSObject, NSString, NSUserActivity,
+};
 use objc2_ui_kit::{
-    UIApplication, UISceneActivationRequestOptions, UISceneDestructionRequestOptions,
+    UIApplication, UIResponder, UISceneActivationRequestOptions, UISceneDestructionRequestOptions,
     UIUserInterfaceStyle, UIViewController, UIWindow, UIWindowScene,
 };
 use tracing::{error, trace, warn};
 
+use crate::app::send_window_event;
 use crate::{MainThread, USER_INFO_WINDOW_ENTITY_ID, WINDOW_ACTIVITY_TYPE};
+
+pub(crate) trait WorldHelper {
+    fn send_window_event(&mut self, event: impl Into<WindowEvent> + Event + Clone);
+}
+
+impl WorldHelper for World {
+    fn send_window_event(&mut self, event: impl Into<WindowEvent> + Event + Clone) {
+        self.send_event(event.clone());
+        self.send_event(event.into());
+    }
+}
 
 /// The state specific to UIKit for each window.
 #[derive(Debug)]
 pub struct UIKitWindow {
     // Is unset if not using scenes
     scene: Option<Retained<UIWindowScene>>,
-    uiwindow: Retained<UIWindow>,
+    pub(crate) uiwindow: Retained<BevyWindow>,
     view_controller: Retained<UIViewController>,
 }
 
@@ -66,12 +81,11 @@ pub(crate) fn setup_window(
 ) -> UIKitWindow {
     let view_controller = unsafe { UIViewController::new(mtm) };
 
-    let uiwindow = unsafe {
-        if let Some(scene) = scene {
-            UIWindow::initWithWindowScene(UIWindow::alloc(mtm), scene)
-        } else {
-            UIWindow::new(mtm)
-        }
+    let uiwindow = BevyWindow::alloc(mtm).set_ivars(entity);
+    let uiwindow: Retained<BevyWindow> = if let Some(scene) = scene {
+        unsafe { msg_send![super(uiwindow), initWithWindowScene: scene] }
+    } else {
+        unsafe { msg_send![super(uiwindow), init] }
     };
     uiwindow.setRootViewController(Some(&view_controller));
 
@@ -142,8 +156,6 @@ pub fn changed_windows(
         trace!(?entity, "detected changes to Window");
         let Some(uikit_window) = uikit_windows.get(entity) else {
             // Not (yet) registered with UIKit, should be when the scene connects.
-            // TODO: Make this state impossible?
-            warn!("changed `Window` before it had a chance to be constructed");
             continue;
         };
 
@@ -296,16 +308,15 @@ fn update_window(
     }
 }
 
+/// Remove windows from the scene.
 pub fn despawn_windows(
     mut removed_windows: RemovedComponents<Window>,
     mut uikit_windows: NonSendMut<UIKitWindows>,
 ) {
     for entity in removed_windows.read() {
         trace!(?entity, "detected removed Window");
-        // Remove from our state.
         let Some(uikit_window) = uikit_windows.entity_to_uikit.remove(&entity) else {
-            // TODO: Make this state impossible?
-            warn!("removed `Window` before it had a chance to be constructed");
+            // Don't request removal on user-removed windows.
             continue;
         };
 
@@ -329,3 +340,44 @@ pub fn despawn_windows(
         }
     }
 }
+
+define_class!(
+    #[unsafe(super(UIWindow))]
+    #[name = "BevyWindow"]
+    #[derive(Debug, PartialEq, Eq, Hash)]
+    #[ivars = Entity]
+    pub(crate) struct BevyWindow;
+
+    /// Override key methods on UIWindow.
+    impl BevyWindow {
+        // canBecomeKeyWindow -> true
+
+        #[unsafe(method(becomeKeyWindow))]
+        fn become_key_window(&self) {
+            let window = *self.ivars();
+            trace!(?window, "becomeKeyWindow");
+            send_window_event(
+                self.mtm(),
+                WindowFocused {
+                    window,
+                    focused: true,
+                },
+            );
+            let _: () = unsafe { msg_send![super(self), becomeKeyWindow] };
+        }
+
+        #[unsafe(method(resignKeyWindow))]
+        fn resign_key_window(&self) {
+            let window = *self.ivars();
+            trace!(?window, "resignKeyWindow");
+            send_window_event(
+                self.mtm(),
+                WindowFocused {
+                    window,
+                    focused: false,
+                },
+            );
+            let _: () = unsafe { msg_send![super(self), resignKeyWindow] };
+        }
+    }
+);

@@ -1,17 +1,18 @@
 #![expect(non_snake_case, reason = "UIKit does not use Rust naming conventions")]
-use std::cell::{RefCell, RefMut};
+use std::cell::{Cell, RefCell, RefMut};
 use std::ptr::NonNull;
 
 use bevy_app::{App, AppExit, PluginsState};
 use bevy_ecs::entity::Entity;
-use bevy_ecs::event::EventReader;
+use bevy_ecs::event::{Event, EventReader};
 use bevy_ecs::query::{QuerySingleError, With};
 use bevy_tasks::tick_global_task_pools_on_main_thread;
-use bevy_window::{PrimaryWindow, Window, WindowCreated};
+use bevy_window::{PrimaryWindow, Window, WindowCreated, WindowEvent};
 use dispatch2::MainThreadBound;
 use objc2::rc::{Allocated, Retained};
 use objc2::runtime::AnyObject;
 use objc2::{available, define_class, msg_send, ClassType, MainThreadMarker, MainThreadOnly};
+use objc2_core_foundation::{kCFRunLoopDefaultMode, CFRunLoopGetMain, CFRunLoopPerformBlock};
 use objc2_foundation::{
     ns_string, NSDictionary, NSObject, NSObjectProtocol, NSSet, NSStringFromClass, NSURL,
 };
@@ -20,10 +21,10 @@ use objc2_ui_kit::{
     UIApplicationOpenURLOptionsKey, UISceneConfiguration, UISceneConnectionOptions, UISceneSession,
     UIWindow,
 };
-use tracing::{trace, warn};
+use tracing::{error, trace, warn};
 
 use crate::scene_delegate::SceneDelegate;
-use crate::windows::setup_window;
+use crate::windows::{setup_window, WorldHelper};
 use crate::UIKitWindows;
 
 /// The [`App::runner`] for the [`UIKitPlugin`](crate::UIKitPlugin) plugin.
@@ -75,7 +76,7 @@ pub fn uikit_runner(mut app: App) -> AppExit {
 pub fn disallow_app_exit(mut exit_events: EventReader<AppExit>) {
     for event in exit_events.read() {
         if cfg!(debug_assertions) {
-            panic!("`{event:?}` is not supported on iOS");
+            panic!("`AppExit::{event:?}` is not supported on iOS");
         }
     }
 }
@@ -105,6 +106,62 @@ pub(crate) fn access_app(mtm: MainThreadMarker) -> RefMut<'static, App> {
     RefMut::map(APP_STATE.get(mtm).borrow_mut(), |app| {
         app.as_mut().expect("application was not initialized")
     })
+}
+
+fn queue_closure(_mtm: MainThreadMarker, closure: impl FnOnce() + 'static) {
+    let run_loop = unsafe { CFRunLoopGetMain() }.unwrap();
+
+    // Convert `FnOnce()` to `Block<dyn Fn()>`.
+    let closure = Cell::new(Some(closure));
+    let block = block2::RcBlock::new(move || {
+        if let Some(closure) = closure.take() {
+            closure()
+        } else {
+            error!("tried to execute queued closure on main thread twice");
+        }
+    });
+
+    let mode = unsafe { kCFRunLoopDefaultMode.unwrap() };
+    // SAFETY: The runloop is valid, the mode is a `CFStringRef`, and the block doesn't need to be
+    // sendable, because we are on the main thread (which is also the run loop we have queued this
+    // on).
+    unsafe { CFRunLoopPerformBlock(&run_loop, Some(mode), Some(&block)) }
+}
+
+/// Send an event to the application, and [update](App::update) it once afterwards to ensure the
+/// event was processed.
+///
+/// Tries to do this synchronously if the application is not in use, but will fall back to
+/// scheduling the event to be sent later if it was.
+pub(crate) fn send_event(mtm: MainThreadMarker, event: impl Event) {
+    if let Ok(mut app) = APP_STATE.get(mtm).try_borrow_mut() {
+        let app = app.as_mut().expect("application was not initialized");
+        app.world_mut().send_event(event);
+        app.update();
+    } else {
+        queue_closure(mtm, move || {
+            let mut app = access_app(mtm);
+            app.world_mut().send_event(event);
+            app.update();
+        });
+    }
+}
+
+pub(crate) fn send_window_event(
+    mtm: MainThreadMarker,
+    event: impl Into<WindowEvent> + Event + Clone,
+) {
+    if let Ok(mut app) = APP_STATE.get(mtm).try_borrow_mut() {
+        let app = app.as_mut().expect("application was not initialized");
+        app.world_mut().send_window_event(event);
+        app.update();
+    } else {
+        queue_closure(mtm, move || {
+            let mut app = access_app(mtm);
+            app.world_mut().send_window_event(event);
+            app.update();
+        });
+    }
 }
 
 #[derive(Debug)]
@@ -170,7 +227,8 @@ define_class!(
                 "application:didFinishLaunchingWithOptions:"
             );
 
-            // TODO: Run app.update in here?
+            let mut app = access_app(self.mtm());
+            // TODO: Run app.update here?
 
             // Scenes are only available on iOS 13.0 and above, so if not available, act roughly
             // as-if `scene:willConnectToSession:options:` was called, and initialize the primary
@@ -178,11 +236,7 @@ define_class!(
             if cfg!(feature = "no-scene")
                 || !available!(ios = 13.0, tvos = 13.0, visionos = 1.0, ..)
             {
-                let mut app = access_app(self.mtm());
-
-                let scene = None;
                 let world = app.world_mut();
-
                 let query = world
                     .query_filtered::<(Entity, &Window), With<PrimaryWindow>>()
                     .get_single(&world);
@@ -190,7 +244,7 @@ define_class!(
                     Ok((entity, window)) => {
                         trace!("initializing primary window");
                         // If the user provided a primary window, initialize that.
-                        let uikit_window = setup_window(scene, entity, window, self.mtm());
+                        let uikit_window = setup_window(None, entity, window, self.mtm());
                         (entity, uikit_window)
                     }
                     Err(QuerySingleError::NoEntities(_)) => {
@@ -198,7 +252,7 @@ define_class!(
                         // If there was no primary window, let's create it ourselves.
                         let entity = world.spawn((Window::default(), PrimaryWindow));
                         let window = entity.get::<Window>().unwrap();
-                        let uikit_window = setup_window(scene, entity.id(), window, self.mtm());
+                        let uikit_window = setup_window(None, entity.id(), window, self.mtm());
                         (entity.id(), uikit_window)
                     }
                     Err(e) => panic!("failed fetching primary window: {e}"),
@@ -207,7 +261,7 @@ define_class!(
                 world
                     .non_send_resource_mut::<UIKitWindows>()
                     .insert(entity, uikit_window);
-                world.send_event(WindowCreated { window: entity });
+                world.send_window_event(WindowCreated { window: entity });
                 // Intentional update, to preserve the amount of updates regardless of using scenes.
                 app.update();
             }

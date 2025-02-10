@@ -3,7 +3,10 @@ use std::cell::Cell;
 
 use bevy_ecs::entity::Entity;
 use bevy_ecs::query::{QuerySingleError, With};
-use bevy_window::{PrimaryWindow, Window, WindowCreated};
+use bevy_window::{
+    PrimaryWindow, Window, WindowActivate, WindowBackground, WindowCreated, WindowDeactivate,
+    WindowDestroyed, WindowForeground,
+};
 use objc2::rc::{Allocated, Retained};
 use objc2::runtime::ProtocolObject;
 use objc2::{define_class, msg_send, DefinedClass as _, MainThreadOnly, Message as _};
@@ -16,10 +19,11 @@ use objc2_ui_kit::{
 use tracing::trace;
 
 use crate::app::access_app;
-use crate::windows::setup_window;
+use crate::windows::{setup_window, WorldHelper};
 use crate::{UIKitWindows, USER_INFO_WINDOW_ENTITY_ID, WINDOW_ACTIVITY_TYPE};
 
 pub(crate) struct Ivars {
+    entity: Cell<Option<Entity>>,
     window: Cell<Option<Retained<UIWindow>>>,
 }
 
@@ -34,6 +38,7 @@ define_class!(
         #[unsafe(method_id(init))]
         fn init(this: Allocated<Self>) -> Retained<Self> {
             let this = this.set_ivars(Ivars {
+                entity: Cell::new(None),
                 window: Cell::new(None),
             });
             unsafe { msg_send![super(this), init] }
@@ -125,36 +130,79 @@ define_class!(
                 }
             };
 
+            self.ivars().entity.set(Some(entity));
+            let uiwindow = uikit_window.uiwindow.retain().into_super();
+            self.ivars().window.set(Some(uiwindow));
+
             world
                 .non_send_resource_mut::<UIKitWindows>()
                 .insert(entity, uikit_window);
-            world.send_event(WindowCreated { window: entity });
+            world.send_window_event(WindowCreated { window: entity });
             app.update();
         }
 
         #[unsafe(method(sceneWillEnterForeground:))]
         fn sceneWillEnterForeground(&self, scene: &UIScene) {
             trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneWillEnterForeground:");
+
+            let mut app = access_app(self.mtm());
+            if let Some(window) = self.ivars().entity.get() {
+                app.world_mut()
+                    .send_window_event(WindowForeground { window });
+            }
+            app.update();
         }
 
         #[unsafe(method(sceneDidBecomeActive:))]
         fn sceneDidBecomeActive(&self, scene: &UIScene) {
             trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidBecomeActive:");
+
+            let mut app = access_app(self.mtm());
+            if let Some(window) = self.ivars().entity.get() {
+                app.world_mut().send_window_event(WindowActivate { window });
+            }
+            app.update();
         }
 
         #[unsafe(method(sceneWillResignActive:))]
         fn sceneWillResignActive(&self, scene: &UIScene) {
             trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneWillResignActive:");
+
+            let mut app = access_app(self.mtm());
+            if let Some(window) = self.ivars().entity.get() {
+                app.world_mut()
+                    .send_window_event(WindowDeactivate { window });
+            }
+            app.update();
         }
 
         #[unsafe(method(sceneDidEnterBackground:))]
         fn sceneDidEnterBackground(&self, scene: &UIScene) {
             trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidEnterBackground:");
+
+            let mut app = access_app(self.mtm());
+            if let Some(window) = self.ivars().entity.get() {
+                app.world_mut()
+                    .send_window_event(WindowBackground { window });
+            }
+            app.update();
         }
 
         #[unsafe(method(sceneDidDisconnect:))]
         fn sceneDidDisconnect(&self, scene: &UIScene) {
             trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidDisconnect:");
+
+            let mut app = access_app(self.mtm());
+            // User/system may have requested scene destruction; if so, we remove it from the world.
+            if let Some(entity) = self.ivars().entity.get() {
+                // despawn_windows will take care of unregistering from UIKitWindows.
+                // Ignore if it doesn't exist, that's likely because someone else despawned it.
+                let _ = app.world_mut().try_despawn(entity);
+                app.world_mut()
+                    .send_window_event(WindowDestroyed { window: entity });
+                self.ivars().entity.set(None);
+            }
+            app.update();
         }
 
         #[unsafe(method(scene:openURLContexts:))]
@@ -174,7 +222,6 @@ define_class!(
 
         #[unsafe(method(setWindow:))]
         fn setWindow(&self, window: Option<&UIWindow>) {
-            trace!("UIWindowSceneDelegate.window configured");
             self.ivars().window.set(window.map(|w| w.retain()));
         }
 
