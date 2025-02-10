@@ -20,5 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - run: rustup target add aarch64-apple-ios-macabi
+    - name: Remove patch section in config.toml
+      run: sed -e '/patch/,+100d' -i '' .cargo/config.toml
     - uses: Swatinem/rust-cache@v2
     - run: cargo test
