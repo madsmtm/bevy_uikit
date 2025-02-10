@@ -152,6 +152,7 @@
 				"$(SRCROOT)/Cargo.toml",
 				"$(SRCROOT)/.cargo/config.toml",
 				"$(SRCROOT)/build-in-xcode.sh",
+				"$(SRCROOT)/Cargo.lock",
 			);
 			outputFileListPaths = (
 			);
