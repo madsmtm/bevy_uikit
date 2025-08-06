@@ -3,9 +3,9 @@ use std::ptr::NonNull;
 
 use bevy_ecs::{
     entity::{hash_map::EntityHashMap, Entity},
-    event::Event,
+    event::BufferedEvent,
+    lifecycle::RemovedComponents,
     query::{Added, Changed, Without},
-    removal_detection::RemovedComponents,
     system::{NonSend, NonSendMut, Query},
     world::World,
 };
@@ -24,11 +24,11 @@ use tracing::{error, trace};
 use crate::{view::ViewController, MainThread, USER_INFO_WINDOW_ENTITY_ID, WINDOW_ACTIVITY_TYPE};
 
 pub(crate) trait WorldHelper {
-    fn send_window_event(&mut self, event: impl Into<WindowEvent> + Event + Clone);
+    fn send_window_event(&mut self, event: impl Into<WindowEvent> + BufferedEvent + Clone);
 }
 
 impl WorldHelper for World {
-    fn send_window_event(&mut self, event: impl Into<WindowEvent> + Event + Clone) {
+    fn send_window_event(&mut self, event: impl Into<WindowEvent> + BufferedEvent + Clone) {
         self.send_event(event.clone());
         self.send_event(event.into());
     }
@@ -165,14 +165,13 @@ pub fn changed_windows(
 
 fn update_window(
     Window {
-        canvas: _,                         // Web-specific
-        clip_children: _,                  // Windows-specific
-        composite_alpha_mode: _,           // Handled by `bevy_render`
-        cursor_options: _,                 // TODO
-        decorations: _,                    // TODO (usable on Mac Catalyst)
-        desired_maximum_frame_latency: _,  // Handled by `bevy_render`
-        enabled_buttons,                   // Handled
-        fit_canvas_to_parent: _,           // Web-specific
+        canvas: _,                                           // Web-specific
+        clip_children: _,                                    // Windows-specific
+        composite_alpha_mode: _,                             // Handled by `bevy_render`
+        decorations: _,                                      // TODO (usable on Mac Catalyst)
+        desired_maximum_frame_latency: _,                    // Handled by `bevy_render`
+        enabled_buttons,                                     // Handled
+        fit_canvas_to_parent: _,                             // Web-specific
         focused: _,                        // TODO: State controlled by us (`keyWindow`)?
         fullsize_content_view: _,          // macOS-specific
         has_shadow: _,                     // macOS-specific
@@ -204,6 +203,7 @@ fn update_window(
         visible: _,                        // Unsupported
         window_level: _,                   // Unsupported
         window_theme,                      // Handled
+        preferred_screen_edges_deferring_system_gestures: _, // TODO
     }: &Window,
     window: &UIWindow,
     scene: Option<&UIWindowScene>,

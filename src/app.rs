@@ -4,7 +4,7 @@ use std::ptr::NonNull;
 
 use bevy_app::{App, AppExit, PluginsState};
 use bevy_ecs::entity::Entity;
-use bevy_ecs::event::{Event, EventReader};
+use bevy_ecs::event::{BufferedEvent, EventReader};
 use bevy_ecs::query::{QuerySingleError, With};
 use bevy_tasks::tick_global_task_pools_on_main_thread;
 use bevy_window::{PrimaryWindow, Window, WindowCreated, WindowEvent};
@@ -133,7 +133,7 @@ fn queue_closure(_mtm: MainThreadMarker, closure: impl FnOnce() + 'static) {
 ///
 /// Tries to do this synchronously if the application is not in use, but will fall back to
 /// scheduling the event to be sent later if it was.
-pub(crate) fn send_event(mtm: MainThreadMarker, event: impl Event) {
+pub(crate) fn send_event(mtm: MainThreadMarker, event: impl BufferedEvent) {
     if let Ok(mut app) = APP_STATE.get(mtm).try_borrow_mut() {
         let app = app.as_mut().expect("application was not initialized");
         app.world_mut().send_event(event);
@@ -150,7 +150,7 @@ pub(crate) fn send_event(mtm: MainThreadMarker, event: impl Event) {
 
 pub(crate) fn send_window_event(
     mtm: MainThreadMarker,
-    event: impl Into<WindowEvent> + Event + Clone,
+    event: impl Into<WindowEvent> + BufferedEvent + Clone,
 ) {
     if let Ok(mut app) = APP_STATE.get(mtm).try_borrow_mut() {
         let app = app.as_mut().expect("application was not initialized");
@@ -241,7 +241,7 @@ define_class!(
                 let world = app.world_mut();
                 let query = world
                     .query_filtered::<(Entity, &Window), With<PrimaryWindow>>()
-                    .get_single(&world);
+                    .single(&world);
                 let (entity, uikit_window) = match query {
                     Ok((entity, window)) => {
                         trace!("initializing primary window");

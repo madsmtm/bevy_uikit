@@ -29,7 +29,7 @@ bevy_window = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }  # D
 bevy_tasks = { git = "https://github.com/madsmtm/bevy", branch = "uikit" }
 
 # Apple-specific
-dispatch2 = "0.2"
+dispatch2 = "0.3"
 block2 = "0.6"
 objc2 = "0.6"
 objc2-core-foundation = "0.3"
@@ -45,7 +45,7 @@ cfg-if = "1.0"
 raw-window-handle = "0.6"
 serde = { version = "1.0", features = ["derive"], optional = true }
 bytemuck = { version = "1.5", optional = true }
-accesskit = "0.17"
+accesskit = "0.21"
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 
 # For examples

@@ -95,7 +95,7 @@ define_class!(
                 // - The user decided to launch a new window using system buttons.
                 let query = world
                     .query_filtered::<Entity, With<PrimaryWindow>>()
-                    .get_single(&world);
+                    .single(&world);
                 match query {
                     Ok(entity) => {
                         // If we have a primary window, check if we have already initialized it.
