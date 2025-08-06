@@ -1,6 +1,5 @@
 #![expect(non_snake_case, reason = "UIKit does not use Rust naming conventions")]
 use std::cell::{Cell, RefCell, RefMut};
-use std::ptr::NonNull;
 
 use bevy_app::{App, AppExit, PluginsState};
 use bevy_ecs::entity::Entity;
@@ -12,12 +11,12 @@ use dispatch2::MainThreadBound;
 use objc2::rc::{Allocated, Retained};
 use objc2::runtime::AnyObject;
 use objc2::{available, define_class, msg_send, ClassType, MainThreadMarker, MainThreadOnly};
-use objc2_core_foundation::{kCFRunLoopDefaultMode, CFRunLoopGetMain, CFRunLoopPerformBlock};
+use objc2_core_foundation::{kCFRunLoopDefaultMode, CFRunLoop};
 use objc2_foundation::{
-    ns_string, NSDictionary, NSObject, NSObjectProtocol, NSSet, NSStringFromClass, NSURL,
+    ns_string, NSDictionary, NSObject, NSObjectProtocol, NSSet, NSString, NSURL,
 };
 use objc2_ui_kit::{
-    UIApplication, UIApplicationDelegate, UIApplicationLaunchOptionsKey, UIApplicationMain,
+    UIApplication, UIApplicationDelegate, UIApplicationLaunchOptionsKey,
     UIApplicationOpenURLOptionsKey, UISceneConfiguration, UISceneConnectionOptions, UISceneSession,
     UIWindow,
 };
@@ -51,21 +50,11 @@ pub fn uikit_runner(mut app: App) -> AppExit {
         panic!("tried to run `uikit_runner` twice");
     }
 
-    // SAFETY: We're on the main thread, and the pointers returned from
-    // `_NSGetArgc` and `_NSGetArgv` are valid.
-    // TODO: Protect against re-entrancy?
-    let res = unsafe {
-        let _ = mtm; // Require main thread
-        UIApplicationMain(
-            *libc::_NSGetArgc(),
-            NonNull::new(*libc::_NSGetArgv()).unwrap(),
-            None, // No custom UIApplication.
-            Some(&NSStringFromClass(ApplicationDelegate::class())),
-        )
-    };
-
-    // UIApplicationMain doesn't return, we just do this to get (and to get nice codegen).
-    AppExit::from_code(res.try_into().unwrap_or(1))
+    UIApplication::main(
+        None, // No custom UIApplication.
+        Some(&NSString::from_class(ApplicationDelegate::class())),
+        mtm,
+    )
 }
 
 /// The [`AppExit`] event makes no sense on iOS, as the application neither
@@ -109,7 +98,7 @@ pub(crate) fn access_app(mtm: MainThreadMarker) -> RefMut<'static, App> {
 }
 
 fn queue_closure(_mtm: MainThreadMarker, closure: impl FnOnce() + 'static) {
-    let run_loop = unsafe { CFRunLoopGetMain() }.unwrap();
+    let run_loop = unsafe { CFRunLoop::main() }.unwrap();
 
     // Convert `FnOnce()` to `Block<dyn Fn()>`.
     let closure = Cell::new(Some(closure));
@@ -125,7 +114,7 @@ fn queue_closure(_mtm: MainThreadMarker, closure: impl FnOnce() + 'static) {
     // SAFETY: The runloop is valid, the mode is a `CFStringRef`, and the block doesn't need to be
     // sendable, because we are on the main thread (which is also the run loop we have queued this
     // on).
-    unsafe { CFRunLoopPerformBlock(&run_loop, Some(mode), Some(&block)) }
+    unsafe { CFRunLoop::perform_block(&run_loop, Some(mode), Some(&block)) }
 }
 
 /// Send an event to the application, and [update](App::update) it once afterwards to ensure the
