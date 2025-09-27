@@ -1,5 +1,6 @@
 # Rust
 /target
+/.cargo/config.toml
 
 # Xcode user settings
 xcuserdata/

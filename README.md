@@ -17,6 +17,14 @@ Checkout https://github.com/madsmtm/bevy/tree/uikit in a folder relative to this
 
 Run the examples on Mac Catalyst with:
 ```
+# Same as `rustc --target=aarch64-apple-ios-macabi --print deployment-target`.
+# Should be redundant after https://github.com/rust-lang/rust/issues/136113.
+export IPHONEOS_DEPLOYMENT_TARGET=13.1
+
+# Mac Catalyst uses the macOS SDK
+# Should be redundant after https://github.com/RustAudio/coreaudio-rs/pull/128.
+export COREAUDIO_SDK_PATH=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+
 cargo bundle --target=aarch64-apple-ios-macabi --example simple && ./target/aarch64-apple-ios-macabi/debug/examples/bundle/ios/bevy_uikit.app/simple
 ```
 
