@@ -11,7 +11,7 @@ use bevy_ecs::{
 };
 use bevy_window::{PrimaryWindow, Window, WindowEvent, WindowTheme};
 use block2::RcBlock;
-use objc2::{available, rc::Retained, MainThreadMarker, MainThreadOnly};
+use objc2::{available, rc::Retained, runtime::AnyObject, MainThreadMarker, MainThreadOnly};
 use objc2::{define_class, msg_send, AllocAnyThread, Message as _};
 use objc2_core_foundation::{CGFloat, CGSize};
 use objc2_foundation::{ns_string, NSDictionary, NSError, NSNumber, NSString, NSUserActivity};
@@ -110,33 +110,28 @@ pub fn create_windows(
         if available!(ios = 13.0, tvos = 13.0, visionos = 1.0, ..) {
             trace!("requesting window creation");
             let application = UIApplication::sharedApplication(mtm.0);
-            let options = unsafe { UISceneActivationRequestOptions::new(mtm.0) };
-            let user_activity = unsafe {
-                NSUserActivity::initWithActivityType(
-                    NSUserActivity::alloc(),
-                    ns_string!(WINDOW_ACTIVITY_TYPE),
-                )
-            };
-            let dict = NSDictionary::from_slices(
+            let options = UISceneActivationRequestOptions::new(mtm.0);
+            let user_activity = NSUserActivity::initWithActivityType(
+                NSUserActivity::alloc(),
+                ns_string!(WINDOW_ACTIVITY_TYPE),
+            );
+            let dict = NSDictionary::<NSString, AnyObject>::from_slices(
                 &[ns_string!(USER_INFO_WINDOW_ENTITY_ID)],
                 &[NSNumber::new_u64(entity.to_bits()).as_ref()],
             );
-            let dict = unsafe { mem::transmute::<&NSDictionary<NSString>, &NSDictionary>(&*dict) };
-            unsafe { user_activity.addUserInfoEntriesFromDictionary(&dict) };
+            unsafe { user_activity.addUserInfoEntriesFromDictionary(dict.cast_unchecked()) };
             // TODO: Set `options.collectionJoinBehavior` on Mac Catalyst?
             let error_handler = RcBlock::new(|err: NonNull<NSError>| {
                 let err = unsafe { err.as_ref() };
                 error!(%err, "failed creating window, this is not possible on single-window iOS");
             });
             #[allow(deprecated, reason = "the replacement API requires newer OS versions")]
-            unsafe {
-                application.requestSceneSessionActivation_userActivity_options_errorHandler(
-                    None, // Create a new scene
-                    Some(&user_activity),
-                    Some(&options),
-                    Some(&error_handler),
-                )
-            };
+            application.requestSceneSessionActivation_userActivity_options_errorHandler(
+                None, // Create a new scene
+                Some(&user_activity),
+                Some(&options),
+                Some(&error_handler),
+            );
         } else {
             error!("failed creating window, this is not possible on this version of iOS");
         }
@@ -213,93 +208,91 @@ fn update_window(
         num.min(f32::MAX) as CGFloat
     }
 
-    unsafe {
-        if let Some(scene) = scene {
-            let title = NSString::from_str(&title);
-            if scene.title() != title {
-                trace!(?title, "setting UIWindowScene.title");
-                scene.setTitle(Some(&title));
+    if let Some(scene) = scene {
+        let title = NSString::from_str(&title);
+        if scene.title() != title {
+            trace!(?title, "setting UIWindowScene.title");
+            scene.setTitle(Some(&title));
+        }
+
+        if let Some(size_restrictions) = scene.sizeRestrictions() {
+            let min = CGSize {
+                width: avoid_inf(resize_constraints.min_width),
+                height: avoid_inf(resize_constraints.min_height),
+            };
+            if min != size_restrictions.minimumSize() {
+                trace!(?min, "setting UIWindowScene.sizeRestrictions.minimumSize");
+                size_restrictions.setMinimumSize(min);
             }
 
-            if let Some(size_restrictions) = scene.sizeRestrictions() {
-                let min = CGSize {
-                    width: avoid_inf(resize_constraints.min_width),
-                    height: avoid_inf(resize_constraints.min_height),
-                };
-                if min != size_restrictions.minimumSize() {
-                    trace!(?min, "setting UIWindowScene.sizeRestrictions.minimumSize");
-                    size_restrictions.setMinimumSize(min);
-                }
-
-                let max = CGSize {
-                    width: avoid_inf(resize_constraints.max_width),
-                    height: avoid_inf(resize_constraints.max_height),
-                };
-                if max != size_restrictions.maximumSize() {
-                    trace!(?max, "setting UIWindowScene.sizeRestrictions.maximumSize");
-                    size_restrictions.setMaximumSize(max);
-                }
-
-                if cfg!(target_abi = "macabi") && available!(ios = 16.0, ..) {
-                    let val = enabled_buttons.maximize;
-                    if size_restrictions.allowsFullScreen() != val {
-                        trace!(
-                            ?val,
-                            "setting UIWindowScene.sizeRestrictions.allowsFullScreen"
-                        );
-                        size_restrictions.setAllowsFullScreen(val);
-                    }
-                }
+            let max = CGSize {
+                width: avoid_inf(resize_constraints.max_width),
+                height: avoid_inf(resize_constraints.max_height),
+            };
+            if max != size_restrictions.maximumSize() {
+                trace!(?max, "setting UIWindowScene.sizeRestrictions.maximumSize");
+                size_restrictions.setMaximumSize(max);
             }
 
-            if available!(ios = 16.0, tvos = 16.0, visionos = 1.0, ..) {
-                if let Some(behaviours) = scene.windowingBehaviors() {
-                    let val = enabled_buttons.minimize;
-                    if behaviours.isMiniaturizable() != val {
-                        trace!(
-                            ?val,
-                            "setting UIWindowScene.windowingBehaviors.miniaturizable"
-                        );
-                        behaviours.setMiniaturizable(val);
-                    }
-
-                    let val = enabled_buttons.close;
-                    if behaviours.isClosable() != val {
-                        trace!(?val, "setting UIWindowScene.windowingBehaviors.closable");
-                        behaviours.setClosable(val);
-                    }
+            if cfg!(target_abi = "macabi") && available!(ios = 16.0, ..) {
+                let val = enabled_buttons.maximize;
+                if size_restrictions.allowsFullScreen() != val {
+                    trace!(
+                        ?val,
+                        "setting UIWindowScene.sizeRestrictions.allowsFullScreen"
+                    );
+                    size_restrictions.setAllowsFullScreen(val);
                 }
-            }
-
-            // UIWindowSceneGeometry only exists on Mac Catalyst 16.0.
-            // On iOS/tvOS/visionOS, it is not possible to modify the frame of the scene (?)
-            if cfg!(target_abi = "macabi") && available!(ios = 16.0) {
-                // TODO
-                // let geometry = scene.effectiveGeometry();
-                //
-                // match position {
-                //     WindowPosition::Automatic => todo!(),
-                //     WindowPosition::Centered(_monitor) => todo!(),
-                //     WindowPosition::At(pos) => todo!(),
-                // }
-                //
-                // let preference = UIWindowSceneGeometryPreferencesMac::new();
-                // preference.setSystemFrame(frame);
             }
         }
 
-        // NOTE: UIUserInterfaceStyle is available on iOS 12, it's just the override there isn't,
-        // so there might be a way to select this even there? But we won't bother.
-        if available!(ios = 13.0, tvos = 13.0, visionos = 1.0, ..) {
-            let style = match window_theme {
-                Some(WindowTheme::Light) => UIUserInterfaceStyle::Light,
-                Some(WindowTheme::Dark) => UIUserInterfaceStyle::Dark,
-                None => UIUserInterfaceStyle::Unspecified,
-            };
-            if window.overrideUserInterfaceStyle() != style {
-                trace!(?style, "setting UIWindow.overrideUserInterfaceStyle");
-                window.setOverrideUserInterfaceStyle(style);
+        if available!(ios = 16.0, tvos = 16.0, visionos = 1.0, ..) {
+            if let Some(behaviours) = scene.windowingBehaviors() {
+                let val = enabled_buttons.minimize;
+                if behaviours.isMiniaturizable() != val {
+                    trace!(
+                        ?val,
+                        "setting UIWindowScene.windowingBehaviors.miniaturizable"
+                    );
+                    behaviours.setMiniaturizable(val);
+                }
+
+                let val = enabled_buttons.close;
+                if behaviours.isClosable() != val {
+                    trace!(?val, "setting UIWindowScene.windowingBehaviors.closable");
+                    behaviours.setClosable(val);
+                }
             }
+        }
+
+        // UIWindowSceneGeometry only exists on Mac Catalyst 16.0.
+        // On iOS/tvOS/visionOS, it is not possible to modify the frame of the scene (?)
+        if cfg!(target_abi = "macabi") && available!(ios = 16.0) {
+            // TODO
+            // let geometry = scene.effectiveGeometry();
+            //
+            // match position {
+            //     WindowPosition::Automatic => todo!(),
+            //     WindowPosition::Centered(_monitor) => todo!(),
+            //     WindowPosition::At(pos) => todo!(),
+            // }
+            //
+            // let preference = UIWindowSceneGeometryPreferencesMac::new();
+            // preference.setSystemFrame(frame);
+        }
+    }
+
+    // NOTE: UIUserInterfaceStyle is available on iOS 12, it's just the override there isn't,
+    // so there might be a way to select this even there? But we won't bother.
+    if available!(ios = 13.0, tvos = 13.0, visionos = 1.0, ..) {
+        let style = match window_theme {
+            Some(WindowTheme::Light) => UIUserInterfaceStyle::Light,
+            Some(WindowTheme::Dark) => UIUserInterfaceStyle::Dark,
+            None => UIUserInterfaceStyle::Unspecified,
+        };
+        if window.overrideUserInterfaceStyle() != style {
+            trace!(?style, "setting UIWindow.overrideUserInterfaceStyle");
+            window.setOverrideUserInterfaceStyle(style);
         }
     }
 }
@@ -319,18 +312,16 @@ pub fn despawn_windows(
         // Request removal from UIKit too.
         if let Some(scene) = uikit_window.scene {
             let app = UIApplication::sharedApplication(scene.mtm());
-            let options = unsafe { UISceneDestructionRequestOptions::new(scene.mtm()) };
+            let options = UISceneDestructionRequestOptions::new(scene.mtm());
             let error_handler = RcBlock::new(|err: NonNull<NSError>| {
                 let err = unsafe { err.as_ref() };
                 error!(%err, "failed removing window, this is not possible on single-window iOS");
             });
-            unsafe {
-                app.requestSceneSessionDestruction_options_errorHandler(
-                    &scene.session(),
-                    Some(&options),
-                    Some(&error_handler),
-                );
-            }
+            app.requestSceneSessionDestruction_options_errorHandler(
+                &scene.session(),
+                Some(&options),
+                Some(&error_handler),
+            );
         } else {
             error!("tried to remove main window, this is not possible on single-window iOS");
         }

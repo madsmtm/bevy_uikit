@@ -25,9 +25,7 @@ define_class!(
     impl ViewController {
         #[unsafe(method(loadView))]
         fn loadView(&self) {
-            let view = View::new(self.mtm(), *self.ivars(), unsafe {
-                self.preferredContentSize()
-            });
+            let view = View::new(self.mtm(), *self.ivars(), self.preferredContentSize());
             self.setView(Some(&view));
 
             // Docs say to _not_ call super

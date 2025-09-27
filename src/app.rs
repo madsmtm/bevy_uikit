@@ -15,10 +15,11 @@ use objc2_core_foundation::{kCFRunLoopDefaultMode, CFRunLoop};
 use objc2_foundation::{
     ns_string, NSDictionary, NSObject, NSObjectProtocol, NSSet, NSString, NSURL,
 };
+#[allow(deprecated)]
+use objc2_ui_kit::UIApplicationOpenURLOptionsKey;
 use objc2_ui_kit::{
-    UIApplication, UIApplicationDelegate, UIApplicationLaunchOptionsKey,
-    UIApplicationOpenURLOptionsKey, UISceneConfiguration, UISceneConnectionOptions, UISceneSession,
-    UIWindow,
+    UIApplication, UIApplicationDelegate, UIApplicationLaunchOptionsKey, UISceneConfiguration,
+    UISceneConnectionOptions, UISceneSession, UIWindow,
 };
 use tracing::{error, trace, warn};
 
@@ -309,6 +310,7 @@ define_class!(
 
         // TODO: Called when using scenes or not?
         #[unsafe(method(application:openURL:options:))]
+        #[allow(deprecated)]
         fn application_openURL_options(
             &self,
             _application: &UIApplication,
@@ -331,9 +333,9 @@ define_class!(
             options: &UISceneConnectionOptions,
         ) -> Retained<UISceneConfiguration> {
             trace!(
-                scene = ?unsafe { connecting_scene_session.persistentIdentifier() },
-                user_info = ?unsafe { connecting_scene_session.userInfo() },
-                configuration = ?unsafe { connecting_scene_session.configuration() },
+                scene = ?connecting_scene_session.persistentIdentifier(),
+                user_info = ?connecting_scene_session.userInfo(),
+                configuration = ?connecting_scene_session.configuration(),
                 ?options,
                 "application:configurationForConnectingSceneSession:options:"
             );
@@ -342,13 +344,11 @@ define_class!(
             // TODO: User activities.
 
             // TODO: Support multiple scene kinds somehow?
-            let config = unsafe {
-                UISceneConfiguration::configurationWithName_sessionRole(
-                    Some(ns_string!("Bevy Configuration")),
-                    &connecting_scene_session.role(),
-                    self.mtm(),
-                )
-            };
+            let config = UISceneConfiguration::configurationWithName_sessionRole(
+                Some(ns_string!("Bevy Configuration")),
+                &connecting_scene_session.role(),
+                self.mtm(),
+            );
 
             unsafe { config.setDelegateClass(Some(SceneDelegate::class())) };
 

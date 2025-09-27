@@ -56,9 +56,9 @@ define_class!(
             connection_options: &UISceneConnectionOptions,
         ) {
             trace!(
-                scene = ?unsafe { scene.session().persistentIdentifier() },
-                user_info = ?unsafe { session.userInfo() },
-                configuration = ?unsafe { session.configuration() },
+                scene = ?scene.session().persistentIdentifier(),
+                user_info = ?session.userInfo(),
+                configuration = ?session.configuration(),
                 ?connection_options,
                 "scene:willConnectToSession:options:"
             );
@@ -69,18 +69,16 @@ define_class!(
             let world = app.world_mut();
 
             // Try to get `Entity` that was passed by `create_windows`.
-            let entity = unsafe {
-                connection_options
-                    .userActivities()
-                    .iter()
-                    .find(|activity| &*activity.activityType() == ns_string!(WINDOW_ACTIVITY_TYPE))
-                    .and_then(|activity| activity.userInfo())
-                    .and_then(|user_info| {
-                        user_info.objectForKey(ns_string!(USER_INFO_WINDOW_ENTITY_ID))
-                    })
-                    .and_then(|obj| obj.downcast::<NSNumber>().ok())
-                    .map(|number| Entity::from_bits(number.as_u64()))
-            };
+            let entity = connection_options
+                .userActivities()
+                .iter()
+                .find(|activity| &*activity.activityType() == ns_string!(WINDOW_ACTIVITY_TYPE))
+                .and_then(|activity| activity.userInfo())
+                .and_then(|user_info| {
+                    user_info.objectForKey(ns_string!(USER_INFO_WINDOW_ENTITY_ID))
+                })
+                .and_then(|obj| obj.downcast::<NSNumber>().ok())
+                .map(|number| Entity::from_bits(number.as_u64()));
 
             let (entity, uikit_window) = if let Some(entity) = entity {
                 trace!("creating requested window");
@@ -143,7 +141,7 @@ define_class!(
 
         #[unsafe(method(sceneWillEnterForeground:))]
         fn sceneWillEnterForeground(&self, scene: &UIScene) {
-            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneWillEnterForeground:");
+            trace!(scene = ?scene.session().persistentIdentifier(), "sceneWillEnterForeground:");
 
             let mut app = access_app(self.mtm());
             if let Some(window) = self.ivars().entity.get() {
@@ -155,7 +153,7 @@ define_class!(
 
         #[unsafe(method(sceneDidBecomeActive:))]
         fn sceneDidBecomeActive(&self, scene: &UIScene) {
-            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidBecomeActive:");
+            trace!(scene = ?scene.session().persistentIdentifier(), "sceneDidBecomeActive:");
 
             let mut app = access_app(self.mtm());
             if let Some(window) = self.ivars().entity.get() {
@@ -167,7 +165,7 @@ define_class!(
 
         #[unsafe(method(sceneWillResignActive:))]
         fn sceneWillResignActive(&self, scene: &UIScene) {
-            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneWillResignActive:");
+            trace!(scene = ?scene.session().persistentIdentifier(), "sceneWillResignActive:");
 
             let mut app = access_app(self.mtm());
             if let Some(window) = self.ivars().entity.get() {
@@ -179,7 +177,7 @@ define_class!(
 
         #[unsafe(method(sceneDidEnterBackground:))]
         fn sceneDidEnterBackground(&self, scene: &UIScene) {
-            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidEnterBackground:");
+            trace!(scene = ?scene.session().persistentIdentifier(), "sceneDidEnterBackground:");
 
             let mut app = access_app(self.mtm());
             if let Some(window) = self.ivars().entity.get() {
@@ -191,7 +189,7 @@ define_class!(
 
         #[unsafe(method(sceneDidDisconnect:))]
         fn sceneDidDisconnect(&self, scene: &UIScene) {
-            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, "sceneDidDisconnect:");
+            trace!(scene = ?scene.session().persistentIdentifier(), "sceneDidDisconnect:");
 
             let mut app = access_app(self.mtm());
             // User/system may have requested scene destruction; if so, we remove it from the world.
@@ -208,7 +206,7 @@ define_class!(
 
         #[unsafe(method(scene:openURLContexts:))]
         fn scene_openURLContexts(&self, scene: &UIScene, url_contexts: &NSSet<UIOpenURLContext>) {
-            trace!(scene = ?unsafe { scene.session().persistentIdentifier() }, ?url_contexts, "scene:openURLContexts:");
+            trace!(scene = ?scene.session().persistentIdentifier(), ?url_contexts, "scene:openURLContexts:");
             // TODO: Handle URL opening
         }
     }
@@ -234,7 +232,7 @@ define_class!(
         ) {
             // Happens quite often apparently?
             // trace!(
-            //     scene = ?unsafe { _scene.session().persistentIdentifier() },
+            //     scene = ?_scene.session().persistentIdentifier(),
             //     ?_previous_coordinate_space,
             //     ?_previous_interface_orientation,
             //     ?_previous_trait_collection,
