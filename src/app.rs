@@ -3,7 +3,7 @@ use std::cell::{Cell, RefCell, RefMut};
 
 use bevy_app::{App, AppExit, PluginsState};
 use bevy_ecs::entity::Entity;
-use bevy_ecs::event::{BufferedEvent, EventReader};
+use bevy_ecs::message::{Message, MessageReader};
 use bevy_ecs::query::{QuerySingleError, With};
 use bevy_tasks::tick_global_task_pools_on_main_thread;
 use bevy_window::{PrimaryWindow, Window, WindowCreated, WindowEvent};
@@ -57,15 +57,15 @@ pub fn uikit_runner(mut app: App) -> AppExit {
     )
 }
 
-/// The [`AppExit`] event makes no sense on iOS, as the application neither
+/// The [`AppExit`] message makes no sense on iOS, as the application neither
 /// can nor should choose when to exit:
 /// https://developer.apple.com/library/archive/qa/qa1561/_index.html
 ///
-/// If we encounter such an event, we abort and complain loudly.
-pub fn disallow_app_exit(mut exit_events: EventReader<AppExit>) {
-    for event in exit_events.read() {
+/// If we encounter such an message, we abort and complain loudly.
+pub fn disallow_app_exit(mut exit_messages: MessageReader<AppExit>) {
+    for message in exit_messages.read() {
         if cfg!(debug_assertions) {
-            panic!("`AppExit::{event:?}` is not supported on iOS");
+            panic!("`AppExit::{message:?}` is not supported on iOS");
         }
     }
 }
@@ -98,7 +98,7 @@ pub(crate) fn access_app(mtm: MainThreadMarker) -> RefMut<'static, App> {
 }
 
 fn queue_closure(_mtm: MainThreadMarker, closure: impl FnOnce() + 'static) {
-    let run_loop = unsafe { CFRunLoop::main() }.unwrap();
+    let run_loop = CFRunLoop::main().unwrap();
 
     // Convert `FnOnce()` to `Block<dyn Fn()>`.
     let closure = Cell::new(Some(closure));
@@ -117,39 +117,39 @@ fn queue_closure(_mtm: MainThreadMarker, closure: impl FnOnce() + 'static) {
     unsafe { CFRunLoop::perform_block(&run_loop, Some(mode), Some(&block)) }
 }
 
-/// Send an event to the application, and [update](App::update) it once afterwards to ensure the
-/// event was processed.
+/// Send a message to the application, and [update](App::update) it once afterwards to ensure the
+/// message was processed.
 ///
 /// Tries to do this synchronously if the application is not in use, but will fall back to
-/// scheduling the event to be sent later if it was.
-pub(crate) fn send_event(mtm: MainThreadMarker, event: impl BufferedEvent) {
+/// scheduling the message to be sent later if it was.
+pub(crate) fn send_message(mtm: MainThreadMarker, message: impl Message) {
     if let Ok(mut app) = APP_STATE.get(mtm).try_borrow_mut() {
         let app = app.as_mut().expect("application was not initialized");
-        app.world_mut().send_event(event);
+        app.world_mut().write_message(message);
         app.update();
     } else {
-        trace!("re-entrant access of App, scheduling event for later");
+        trace!("re-entrant access of App, scheduling message for later");
         queue_closure(mtm, move || {
             let mut app = access_app(mtm);
-            app.world_mut().send_event(event);
+            app.world_mut().write_message(message);
             app.update();
         });
     }
 }
 
-pub(crate) fn send_window_event(
+pub(crate) fn send_window_message(
     mtm: MainThreadMarker,
-    event: impl Into<WindowEvent> + BufferedEvent + Clone,
+    message: impl Into<WindowEvent> + Message + Clone,
 ) {
     if let Ok(mut app) = APP_STATE.get(mtm).try_borrow_mut() {
         let app = app.as_mut().expect("application was not initialized");
-        app.world_mut().send_window_event(event);
+        app.world_mut().send_window_message(message);
         app.update();
     } else {
-        trace!("re-entrant access of App, scheduling event for later");
+        trace!("re-entrant access of App, scheduling message for later");
         queue_closure(mtm, move || {
             let mut app = access_app(mtm);
-            app.world_mut().send_window_event(event);
+            app.world_mut().send_window_message(message);
             app.update();
         });
     }
@@ -252,7 +252,7 @@ define_class!(
                 world
                     .non_send_resource_mut::<UIKitWindows>()
                     .insert(entity, uikit_window);
-                world.send_window_event(WindowCreated { window: entity });
+                world.send_window_message(WindowCreated { window: entity });
                 // Intentional update, to preserve the amount of updates regardless of using scenes.
                 app.update();
             }
@@ -294,7 +294,7 @@ define_class!(
                 .take()
                 .expect("application was not initialized");
             // `Drop` the `App` to cleanly shut down Bevy's state.
-            // TODO: Emit an event too?
+            // TODO: Emit a message too?
             let _: App = app;
         }
 

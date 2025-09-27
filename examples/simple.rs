@@ -1,6 +1,7 @@
 use bevy::{color::palettes::css::PURPLE, prelude::*};
 use bevy_uikit::UIKitPlugin;
 use bevy_window::{ExitCondition, WindowEvent};
+use tracing::info;
 
 fn main() {
     App::new()
@@ -13,7 +14,7 @@ fn main() {
         .add_plugins(UIKitPlugin)
         .add_systems(Startup, setup)
         .add_systems(Update, change_clear_color)
-        .add_systems(Update, window_events)
+        .add_systems(Update, window_messages)
         .run();
 }
 
@@ -27,8 +28,8 @@ fn change_clear_color(input: Res<ButtonInput<KeyCode>>, mut clear_color: ResMut<
     }
 }
 
-fn window_events(mut events: EventReader<WindowEvent>) {
-    for event in events.read() {
-        info!(?event);
+fn window_messages(mut messages: MessageReader<WindowEvent>) {
+    for message in messages.read() {
+        info!(?message);
     }
 }

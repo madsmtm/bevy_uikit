@@ -86,4 +86,5 @@ bevy = { git = "https://github.com/madsmtm/bevy", branch = "uikit", default-feat
     "vorbis",
     "webgl2",
     "x11",
+    "zstd_rust",
 ] }

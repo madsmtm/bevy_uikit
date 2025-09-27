@@ -3,8 +3,8 @@ use std::ptr::NonNull;
 
 use bevy_ecs::{
     entity::{hash_map::EntityHashMap, Entity},
-    event::BufferedEvent,
     lifecycle::RemovedComponents,
+    message::Message,
     query::{Added, Changed, Without},
     system::{NonSend, NonSendMut, Query},
     world::World,
@@ -12,7 +12,7 @@ use bevy_ecs::{
 use bevy_window::{PrimaryWindow, Window, WindowEvent, WindowTheme};
 use block2::RcBlock;
 use objc2::{available, rc::Retained, MainThreadMarker, MainThreadOnly};
-use objc2::{define_class, msg_send, AllocAnyThread, Message};
+use objc2::{define_class, msg_send, AllocAnyThread, Message as _};
 use objc2_core_foundation::{CGFloat, CGSize};
 use objc2_foundation::{ns_string, NSDictionary, NSError, NSNumber, NSString, NSUserActivity};
 use objc2_ui_kit::{
@@ -24,13 +24,13 @@ use tracing::{error, trace};
 use crate::{view::ViewController, MainThread, USER_INFO_WINDOW_ENTITY_ID, WINDOW_ACTIVITY_TYPE};
 
 pub(crate) trait WorldHelper {
-    fn send_window_event(&mut self, event: impl Into<WindowEvent> + BufferedEvent + Clone);
+    fn send_window_message(&mut self, message: impl Into<WindowEvent> + Message + Clone);
 }
 
 impl WorldHelper for World {
-    fn send_window_event(&mut self, event: impl Into<WindowEvent> + BufferedEvent + Clone) {
-        self.send_event(event.clone());
-        self.send_event(event.into());
+    fn send_window_message(&mut self, message: impl Into<WindowEvent> + Message + Clone) {
+        self.write_message(message.clone());
+        self.write_message(message.into());
     }
 }
 

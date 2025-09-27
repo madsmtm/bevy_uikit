@@ -137,7 +137,7 @@ define_class!(
             world
                 .non_send_resource_mut::<UIKitWindows>()
                 .insert(entity, uikit_window);
-            world.send_window_event(WindowCreated { window: entity });
+            world.send_window_message(WindowCreated { window: entity });
             app.update();
         }
 
@@ -148,7 +148,7 @@ define_class!(
             let mut app = access_app(self.mtm());
             if let Some(window) = self.ivars().entity.get() {
                 app.world_mut()
-                    .send_window_event(WindowForeground { window });
+                    .send_window_message(WindowForeground { window });
             }
             app.update();
         }
@@ -159,7 +159,8 @@ define_class!(
 
             let mut app = access_app(self.mtm());
             if let Some(window) = self.ivars().entity.get() {
-                app.world_mut().send_window_event(WindowActivate { window });
+                app.world_mut()
+                    .send_window_message(WindowActivate { window });
             }
             app.update();
         }
@@ -171,7 +172,7 @@ define_class!(
             let mut app = access_app(self.mtm());
             if let Some(window) = self.ivars().entity.get() {
                 app.world_mut()
-                    .send_window_event(WindowDeactivate { window });
+                    .send_window_message(WindowDeactivate { window });
             }
             app.update();
         }
@@ -183,7 +184,7 @@ define_class!(
             let mut app = access_app(self.mtm());
             if let Some(window) = self.ivars().entity.get() {
                 app.world_mut()
-                    .send_window_event(WindowBackground { window });
+                    .send_window_message(WindowBackground { window });
             }
             app.update();
         }
@@ -199,7 +200,7 @@ define_class!(
                 // Ignore if it doesn't exist, that's likely because someone else despawned it.
                 let _ = app.world_mut().try_despawn(entity);
                 app.world_mut()
-                    .send_window_event(WindowDestroyed { window: entity });
+                    .send_window_message(WindowDestroyed { window: entity });
                 self.ivars().entity.set(None);
             }
             app.update();

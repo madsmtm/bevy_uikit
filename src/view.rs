@@ -10,7 +10,7 @@ use objc2_ui_kit::{
 };
 use tracing::trace;
 
-use crate::app::send_window_event;
+use crate::app::send_window_message;
 
 define_class!(
     #[unsafe(super(UIViewController))]
@@ -78,7 +78,7 @@ define_class!(
         fn becomeFirstResponder(&self) -> bool {
             let success = unsafe { msg_send![super(self), becomeFirstResponder] };
             if success {
-                send_window_event(
+                send_window_message(
                     self.mtm(),
                     WindowFocused {
                         window: *self.ivars(),
@@ -93,7 +93,7 @@ define_class!(
         fn resignFirstResponder(&self) -> bool {
             let success = unsafe { msg_send![super(self), resignFirstResponder] };
             if success {
-                send_window_event(
+                send_window_message(
                     self.mtm(),
                     WindowFocused {
                         window: *self.ivars(),
