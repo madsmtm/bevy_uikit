@@ -45,46 +45,32 @@ cfg-if = "1.0"
 raw-window-handle = "0.6"
 serde = { version = "1.0", features = ["derive"], optional = true }
 bytemuck = { version = "1.5", optional = true }
-accesskit = "0.21"
+accesskit = "0.23"
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 
 # For examples
 [dev-dependencies]
 bevy = { git = "https://github.com/madsmtm/bevy", branch = "uikit", default-features = false, features = [
     # Default, except for `winit`
+    "default_app",
+    "2d_bevy_render",
+    "scene",
+    "audio",
+    "picking",
+    "3d_bevy_render",
+    "ui",
+    "ui_api",
+    "ui_bevy_render",
+    # "default_platform",
+    "std",
     "android-game-activity",
     "android_shared_stdcxx",
-    "animation",
-    "bevy_asset",
-    "bevy_audio",
-    "bevy_color",
-    "bevy_core_pipeline",
     "bevy_gilrs",
-    "bevy_gizmos",
-    "bevy_gltf",
-    "bevy_mesh_picking_backend",
-    "bevy_pbr",
-    "bevy_picking",
-    "bevy_render",
-    "bevy_scene",
-    "bevy_sprite",
-    "bevy_sprite_picking_backend",
-    "bevy_state",
-    "bevy_text",
-    "bevy_ui",
-    "bevy_ui_picking_backend",
-    "bevy_window",
     # "bevy_winit",
-    "custom_cursor",
     "default_font",
-    "hdr",
     "multi_threaded",
-    "png",
-    "smaa_luts",
-    "sysinfo_plugin",
-    "tonemapping_luts",
-    "vorbis",
     "webgl2",
     "x11",
-    "zstd_rust",
+    "wayland",
+    "sysinfo_plugin",
 ] }
